@@ -6,8 +6,8 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../../store";
 import * as client from "./client";
 import { Quiz } from "../../../types";
-import { Button, Card, Badge } from "react-bootstrap";
-import { FaPlus, FaTrash, FaEdit, FaEye } from "react-icons/fa";
+import { Button, Card, Badge, Dropdown } from "react-bootstrap";
+import { FaPlus, FaEllipsisV } from "react-icons/fa";
 import { format } from "date-fns";
 
 export default function Quizzes() {
@@ -16,7 +16,6 @@ export default function Quizzes() {
   const { currentUser } = useSelector((state: RootState) => state.accountReducer);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showMenu, setShowMenu] = useState<string | null>(null);
 
   useEffect(() => {
     if (cid) {
@@ -123,7 +122,7 @@ export default function Quizzes() {
                         <h3 style={{ cursor: "pointer", margin: 0 }}>{quiz.title}</h3>
                       </Link>
                       {isFaculty && quiz.published && (
-                        <Badge bg="success">Published</Badge>
+                        <span style={{ color: "#28a745", fontSize: "1.2rem" }}>✓</span>
                       )}
                     </div>
                     <div style={{ color: "#666", fontSize: "0.9rem", marginBottom: "0.5rem" }}>
@@ -141,29 +140,23 @@ export default function Quizzes() {
                     </div>
                   </div>
                   {isFaculty && (
-                    <div style={{ display: "flex", gap: "0.5rem" }}>
-                      <Button
-                        variant="outline-primary"
-                        size="sm"
-                        onClick={() => router.push(`/Courses/${cid}/Quizzes/${quiz._id}/edit`)}
+                    <Dropdown>
+                      <Dropdown.Toggle
+                        variant="link"
+                        id={`quiz-menu-${quiz._id}`}
+                        style={{ textDecoration: "none", color: "#000", padding: "0.25rem 0.5rem" }}
                       >
-                        <FaEdit /> Edit
-                      </Button>
-                      <Button
-                        variant="outline-secondary"
-                        size="sm"
-                        onClick={() => handlePublish(quiz._id, !quiz.published)}
-                      >
-                        {quiz.published ? "Unpublish" : "Publish"}
-                      </Button>
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        onClick={() => handleDelete(quiz._id)}
-                      >
-                        <FaTrash /> Delete
-                      </Button>
-                    </div>
+                        <FaEllipsisV />
+                      </Dropdown.Toggle>
+                      <Dropdown.Menu>
+                        <Dropdown.Item onClick={() => handlePublish(quiz._id, !quiz.published)}>
+                          {quiz.published ? "Unpublish" : "Publish"}
+                        </Dropdown.Item>
+                        <Dropdown.Item onClick={() => handleDelete(quiz._id)} style={{ color: "#dc3545" }}>
+                          Delete
+                        </Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown>
                   )}
                 </div>
               </Card.Body>

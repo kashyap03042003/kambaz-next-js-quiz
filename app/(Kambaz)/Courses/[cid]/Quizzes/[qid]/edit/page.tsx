@@ -177,18 +177,6 @@ export default function QuizEditor() {
               </div>
               <div className="form-row">
                 <Form.Group className="mb-3">
-                  <Form.Label>Assignment Group</Form.Label>
-                  <Form.Select
-                    value={quiz.assignmentGroup || "quizzes"}
-                    onChange={(e) => setQuiz({ ...quiz, assignmentGroup: e.target.value as Quiz["assignmentGroup"] })}
-                  >
-                    <option value="quizzes">Quizzes</option>
-                    <option value="exams">Exams</option>
-                    <option value="assignments">Assignments</option>
-                    <option value="project">Project</option>
-                  </Form.Select>
-                </Form.Group>
-                <Form.Group className="mb-3">
                   <Form.Label>Multiple Attempts</Form.Label>
                   <Form.Select
                     value={quiz.multipleAttempts ? "yes" : "no"}
@@ -198,6 +186,16 @@ export default function QuizEditor() {
                     <option value="no">No</option>
                   </Form.Select>
                 </Form.Group>
+                {quiz.multipleAttempts && (
+                  <Form.Group className="mb-3">
+                    <Form.Label>How Many Attempts</Form.Label>
+                    <Form.Control
+                      type="number"
+                      value={quiz.attemptsAllowed || 1}
+                      onChange={(e) => setQuiz({ ...quiz, attemptsAllowed: parseInt(e.target.value) || 1 })}
+                    />
+                  </Form.Group>
+                )}
               </div>
               <div className="form-row">
                 <Form.Group className="mb-3">
@@ -232,16 +230,6 @@ export default function QuizEditor() {
                   )}
                 </Form.Group>
               </div>
-              {quiz.multipleAttempts && (
-                <Form.Group className="mb-3">
-                  <Form.Label>How Many Attempts</Form.Label>
-                  <Form.Control
-                    type="number"
-                    value={quiz.attemptsAllowed || 1}
-                    onChange={(e) => setQuiz({ ...quiz, attemptsAllowed: parseInt(e.target.value) || 1 })}
-                  />
-                </Form.Group>
-              )}
               <Form.Group className="mb-3">
                 <Form.Label>Show Correct Answers</Form.Label>
                 <Form.Select
@@ -262,38 +250,6 @@ export default function QuizEditor() {
                   onChange={(e) => setQuiz({ ...quiz, accessCode: e.target.value })}
                   placeholder="Leave blank for no access code"
                 />
-              </Form.Group>
-              <div className="form-row">
-                <Form.Group className="mb-3">
-                  <Form.Label>One Question at a Time</Form.Label>
-                  <Form.Select
-                    value={quiz.oneQuestionAtATime ? "yes" : "no"}
-                    onChange={(e) => setQuiz({ ...quiz, oneQuestionAtATime: e.target.value === "yes" })}
-                  >
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </Form.Select>
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Webcam Required</Form.Label>
-                  <Form.Select
-                    value={quiz.webcamRequired ? "yes" : "no"}
-                    onChange={(e) => setQuiz({ ...quiz, webcamRequired: e.target.value === "yes" })}
-                  >
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </Form.Select>
-                </Form.Group>
-              </div>
-              <Form.Group className="mb-3">
-                <Form.Label>Lock Questions After Answering</Form.Label>
-                <Form.Select
-                  value={quiz.lockQuestionsAfterAnswering ? "yes" : "no"}
-                  onChange={(e) => setQuiz({ ...quiz, lockQuestionsAfterAnswering: e.target.value === "yes" })}
-                >
-                  <option value="yes">Yes</option>
-                  <option value="no">No</option>
-                </Form.Select>
               </Form.Group>
               <div className="form-row">
                 <Form.Group className="mb-3">
@@ -334,7 +290,7 @@ export default function QuizEditor() {
                 <Button variant="success" onClick={() => handleSave(true)}>
                   Save and Publish
                 </Button>
-                <Button variant="secondary" onClick={() => router.push(`/Courses/${cid}/Quizzes/${qid}`)}>
+                <Button variant="secondary" onClick={() => router.push(`/Courses/${cid}/Quizzes`)}>
                   Cancel
                 </Button>
               </div>
@@ -392,8 +348,9 @@ export default function QuizEditor() {
                       <div 
                         dangerouslySetInnerHTML={{ 
                           __html: question.type === "fill-blank" 
-                            ? question.question.replace(/___/g, '<span style="border-bottom: 2px solid #333; padding: 0 0.5rem; min-width: 100px; display: inline-block;">___</span>')
-                                .replace(/\[___\]/g, '<span style="border-bottom: 2px solid #333; padding: 0 0.5rem; min-width: 100px; display: inline-block;">[___]</span>')
+                            ? question.question
+                                .replace(/\[___\]/g, '<span style="border-bottom: 2px solid #333; padding: 0 0.25rem; min-width: 60px; display: inline-block;">[___]</span>')
+                                .replace(/___/g, '<span style="border-bottom: 2px solid #333; padding: 0 0.25rem; min-width: 60px; display: inline-block;">___</span>')
                             : question.question 
                         }} 
                       />

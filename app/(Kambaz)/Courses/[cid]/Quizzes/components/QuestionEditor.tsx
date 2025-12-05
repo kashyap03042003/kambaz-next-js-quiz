@@ -237,9 +237,39 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
           <Form.Label>Question Text *</Form.Label>
           <RichTextEditor value={questionText} onChange={setQuestionText} />
           {type === "fill-blank" && (
-            <Form.Text className="text-muted" style={{ display: "block", marginTop: "0.5rem" }}>
-              Tip: Use underscores (___) or brackets [___] to indicate where students should fill in the blank.
-            </Form.Text>
+            <div style={{ marginTop: "0.5rem", padding: "1rem", background: "#f8f9fa", borderRadius: "4px" }}>
+              <Form.Text className="text-muted" style={{ display: "block", marginBottom: "0.75rem" }}>
+                <strong>How to add blanks:</strong> Type <code>___</code> or <code>[___]</code> in your question text where you want students to fill in the blank.
+                Each blank will be automatically numbered (1, 2, 3, etc.) and students will see numbered input boxes for each blank.
+              </Form.Text>
+              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  onClick={() => {
+                    // Simple approach: append to the end of the question text
+                    setQuestionText(questionText + ' ___');
+                  }}
+                >
+                  + Add Blank (___)
+                </Button>
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  onClick={() => {
+                    // Simple approach: append to the end of the question text
+                    setQuestionText(questionText + ' [___]');
+                  }}
+                >
+                  + Add Blank ([___])
+                </Button>
+              </div>
+              <div style={{ fontSize: "0.875rem", color: "#6c757d" }}>
+                <strong>Example:</strong> "The capital of France is ___ and the capital of Germany is ___."
+                <br />
+                This creates two numbered input boxes: (1) and (2) for students to fill in.
+              </div>
+            </div>
           )}
         </Form.Group>
 
