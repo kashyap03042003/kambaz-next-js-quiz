@@ -5,7 +5,7 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
-  dob?: string;
+    dob?: string;
   role: "STUDENT" | "FACULTY" | "ADMIN" | "TA";
   loginId?: string;
   section?: string;
@@ -60,4 +60,85 @@ export interface Enrollment {
   _id: string;
   user: string;
   course: string;
+}
+
+// Quiz Types
+export type QuizType = "graded-quiz" | "practice-quiz" | "graded-survey" | "ungraded-survey";
+export type AssignmentGroup = "quizzes" | "exams" | "assignments" | "project";
+export type ShowCorrectAnswers = "always" | "after-submission" | "after-due-date" | "never";
+
+export interface Quiz {
+  _id: string;
+  courseId: string;
+  title: string;
+  description: string;
+  quizType: QuizType;
+  points: number;
+  assignmentGroup: AssignmentGroup;
+  shuffleAnswers: boolean;
+  timeLimit: number; // in minutes
+  multipleAttempts: boolean;
+  attemptsAllowed: number;
+  showCorrectAnswers: ShowCorrectAnswers;
+  accessCode: string;
+  oneQuestionAtATime: boolean;
+  webcamRequired: boolean;
+  lockQuestionsAfterAnswering: boolean;
+  dueDate: string | null;
+  availableDate: string | null;
+  availableUntilDate: string | null;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+  questionCount?: number;
+  score?: number;
+  totalPoints?: number;
+}
+
+export type QuestionType = "multiple-choice" | "true-false" | "fill-blank";
+
+export interface MultipleChoiceQuestion {
+  _id: string;
+  quizId: string;
+  type: "multiple-choice";
+  title: string;
+  points: number;
+  question: string;
+  choices: string[];
+  correctChoiceIndex?: number; // For backward compatibility (single answer)
+  correctChoiceIndices?: number[]; // For multiple correct answers
+}
+
+export interface TrueFalseQuestion {
+  _id: string;
+  quizId: string;
+  type: "true-false";
+  title: string;
+  points: number;
+  question: string;
+  correctAnswer: boolean;
+}
+
+export interface FillBlankQuestion {
+  _id: string;
+  quizId: string;
+  type: "fill-blank";
+  title: string;
+  points: number;
+  question: string;
+  correctAnswers: string[];
+}
+
+export type Question = MultipleChoiceQuestion | TrueFalseQuestion | FillBlankQuestion;
+
+export interface QuizAttempt {
+  _id: string;
+  quizId: string;
+  studentId: string;
+  answers: Record<string, any>; // questionId -> answer
+  score: number;
+  totalPoints: number;
+  submittedAt: string;
+  attemptNumber: number;
+  gradedAnswers?: Record<string, { answer: any; correct: boolean; correctAnswer: any }>;
 }

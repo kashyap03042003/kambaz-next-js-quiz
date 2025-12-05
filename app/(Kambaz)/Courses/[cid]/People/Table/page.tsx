@@ -14,8 +14,20 @@ export default function PeopleTable() {
   useEffect(() => {
     const fetchUsers = async () => {
       if (cid) {
-        const courseUsers = await coursesClient.findUsersForCourse(cid as string);
-        setUsers(courseUsers);
+        try {
+          const courseUsers = await coursesClient.findUsersForCourse(cid as string);
+          // Filter out any null/undefined users and ensure they have required fields
+          const validUsers = courseUsers.filter((user: User | null | undefined): user is User => 
+            user != null && 
+            user._id != null && 
+            user.firstName != null && 
+            user.lastName != null
+          );
+          setUsers(validUsers);
+        } catch (error) {
+          console.error("Error fetching users:", error);
+          setUsers([]);
+        }
       }
     };
     fetchUsers();
@@ -39,14 +51,14 @@ export default function PeopleTable() {
             <tr key={user._id}>
               <td className="wd-full-name text-nowrap">
                 <FaUserCircle className="me-2 fs-1 text-secondary" />
-                <span className="wd-first-name">{user.firstName}</span>{" "}
-                <span className="wd-last-name">{user.lastName}</span>
+                <span className="wd-first-name">{user.firstName || ""}</span>{" "}
+                <span className="wd-last-name">{user.lastName || ""}</span>
               </td>
-              <td className="wd-login-id">{user.loginId}</td>
-              <td className="wd-section">{user.section}</td>
-              <td className="wd-role">{user.role}</td>
-              <td className="wd-last-activity">{user.lastActivity}</td>
-              <td className="wd-total-activity">{user.totalActivity}</td>
+              <td className="wd-login-id">{user.loginId || ""}</td>
+              <td className="wd-section">{user.section || ""}</td>
+              <td className="wd-role">{user.role || ""}</td>
+              <td className="wd-last-activity">{user.lastActivity || ""}</td>
+              <td className="wd-total-activity">{user.totalActivity || ""}</td>
             </tr>
           ))}
         </tbody>
