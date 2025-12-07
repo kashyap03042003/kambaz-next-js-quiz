@@ -5,11 +5,10 @@ import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../../store";
 import * as client from "../../client";
-import { Quiz, Question, MultipleChoiceQuestion } from "../../../../../types";
+import { Quiz, Question, MultipleChoiceQuestion, TrueFalseQuestion, FillBlankQuestion } from "../../../../../types";
 import { Button, Card, Form, Tabs, Tab } from "react-bootstrap";
 import RichTextEditor from "../../components/RichTextEditor";
 import QuestionEditor from "../../components/QuestionEditor";
-import "../../components/QuestionEditor.css";
 
 export default function QuizEditor() {
   const { cid, qid } = useParams();
@@ -108,31 +107,25 @@ export default function QuizEditor() {
   }
 
   return (
-    <div id="wd-quiz-editor" style={{ padding: "20px" }}>
-      <div style={{ marginBottom: "1rem" }}>
+    <div id="wd-quiz-editor" className="p-[20px]">
+      <div className="mb-4">
         <Link href={`/Courses/${cid}/Quizzes/${qid}`}>← Back to Quiz</Link>
       </div>
 
       <h2>Edit Quiz: {quiz.title}</h2>
 
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem", borderBottom: "2px solid #ddd" }}>
+      <div className="flex mb-4 border-b-2 border-gray-300">
         <Button
           variant={activeTab === "details" ? "primary" : "outline-primary"}
           onClick={() => setActiveTab("details")}
-          style={{
-            borderBottom: activeTab === "details" ? "2px solid #0066cc" : "2px solid transparent",
-            borderRadius: 0,
-          }}
+          className={`${activeTab === "details" ? "border-b-2 border-blue-600" : "border-b-2 border-transparent"} rounded-none me-3`}
         >
           Details
         </Button>
         <Button
           variant={activeTab === "questions" ? "primary" : "outline-primary"}
           onClick={() => setActiveTab("questions")}
-          style={{
-            borderBottom: activeTab === "questions" ? "2px solid #0066cc" : "2px solid transparent",
-            borderRadius: 0,
-          }}
+          className={`${activeTab === "questions" ? "border-b-2 border-blue-600" : "border-b-2 border-transparent"} rounded-none`}
         >
           Questions
         </Button>
@@ -225,7 +218,7 @@ export default function QuizEditor() {
                       value={quiz.timeLimit || 20}
                       onChange={(e) => setQuiz({ ...quiz, timeLimit: parseInt(e.target.value) || 20 })}
                       min="1"
-                      style={{ marginTop: "0.5rem" }}
+                      className="mt-2"
                     />
                   )}
                 </Form.Group>
@@ -283,11 +276,11 @@ export default function QuizEditor() {
                   }
                 />
               </Form.Group>
-              <div style={{ display: "flex", gap: "1rem", marginTop: "2rem" }}>
-                <Button variant="primary" onClick={() => handleSave(false)}>
+              <div className="flex items-center mt-8">
+                <Button variant="primary" onClick={() => handleSave(false)} className="me-4">
                   Save
                 </Button>
-                <Button variant="success" onClick={() => handleSave(true)}>
+                <Button variant="success" onClick={() => handleSave(true)} className="me-4">
                   Save and Publish
                 </Button>
                 <Button variant="secondary" onClick={() => router.push(`/Courses/${cid}/Quizzes`)}>
@@ -299,14 +292,14 @@ export default function QuizEditor() {
         </Card>
       ) : (
         <div>
-          <div className="questions-header">
-            <h3>Questions ({questions.length})</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '2px solid #e9ecef' }}>
+            <h3 style={{ margin: 0, fontSize: '1.5rem', color: '#333' }}>Questions ({questions.length})</h3>
             <Button variant="primary" onClick={handleAddQuestion}>
               + New Question
             </Button>
           </div>
           {editingQuestion && (
-            <div style={{ marginBottom: "2rem" }}>
+            <div className="mb-8">
               <QuestionEditor
                 question={editingQuestion}
                 onSave={handleQuestionSave}
@@ -315,108 +308,90 @@ export default function QuizEditor() {
             </div>
           )}
           {questions.length > 0 && (
-            <div className="questions-list">
+            <div className="flex flex-col gap-4">
               {questions.map((question, index) => (
-                <Card key={question._id} className="question-card">
+                <Card key={question._id} className="bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
                   <Card.Body>
-                    <div className="question-card-header">
-                      <div className="question-card-title">
-                        <h4>
+                    <div className="mb-4 pb-4 border-b border-gray-200">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <h4 className="text-lg text-gray-800" style={{ margin: 0 }}>
                           Question {index + 1}: {question.title || "Untitled"}
                         </h4>
-                        <div className="question-card-meta">
-                          <span>
-                            <strong>Type:</strong>{" "}
-                            {question.type.replace("-", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-                          </span>
-                          {" • "}
-                          <span>
-                            <strong>Points:</strong> {question.points}
-                          </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Button variant="secondary" size="sm" onClick={() => setEditingQuestion(question)}>
+                            Edit
+                          </Button>
+                          <Button variant="danger" size="sm" onClick={() => handleQuestionDelete(question._id)}>
+                            Delete
+                          </Button>
                         </div>
                       </div>
-                      <div className="question-card-actions">
-                        <Button variant="secondary" size="sm" onClick={() => setEditingQuestion(question)}>
-                          Edit
-                        </Button>
-                        <Button variant="danger" size="sm" onClick={() => handleQuestionDelete(question._id)}>
-                          Delete
-                        </Button>
+                      <div className="text-sm text-gray-600">
+                        <span>
+                          <strong>Type:</strong>{" "}
+                          {question.type.replace("-", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                        </span>
+                        {" • "}
+                        <span>
+                          <strong>Points:</strong> {question.points}
+                        </span>
                       </div>
                     </div>
-                    <div className="question-card-content">
+                    <div className="mb-4 leading-relaxed">
                       <div 
                         dangerouslySetInnerHTML={{ 
                           __html: question.type === "fill-blank" 
                             ? question.question
-                                .replace(/\[___\]/g, '<span style="border-bottom: 2px solid #333; padding: 0 0.25rem; min-width: 60px; display: inline-block;">[___]</span>')
-                                .replace(/___/g, '<span style="border-bottom: 2px solid #333; padding: 0 0.25rem; min-width: 60px; display: inline-block;">___</span>')
+                                .replace(/\[___\]/g, '<span class="border-b-2 border-gray-800 px-1 min-w-[60px] inline-block">[___]</span>')
+                                .replace(/___/g, '<span class="border-b-2 border-gray-800 px-1 min-w-[60px] inline-block">___</span>')
                             : question.question 
                         }} 
                       />
                     </div>
                     {question.type === "multiple-choice" && (
-                      <div className="question-choices">
+                      <div className="mt-4 pt-4 border-t border-gray-200">
                         <strong>Choices:</strong>
-                        <ul>
-                          {(question as any).choices.map((choice: string, i: number) => {
+                        <div style={{ marginTop: '0.5rem' }}>
+                          {(question as MultipleChoiceQuestion).choices.map((choice: string, i: number) => {
                             const mcq = question as MultipleChoiceQuestion;
                             const correctIndices = mcq.correctChoiceIndices && mcq.correctChoiceIndices.length > 0
                               ? mcq.correctChoiceIndices
                               : (mcq.correctChoiceIndex !== undefined ? [mcq.correctChoiceIndex] : []);
                             const isCorrect = correctIndices.includes(i);
                             return (
-                              <li
+                              <div
                                 key={i}
-                                style={
-                                  isCorrect
-                                    ? { borderLeftColor: "#28a745", background: "#d4edda" }
-                                    : {}
-                                }
+                                className={`p-2 mb-1 bg-gray-100 rounded border-l-[3px] ${isCorrect ? "border-l-green-500 bg-green-100" : "border-l-gray-300"}`}
                               >
-                                {isCorrect && <strong>✓ </strong>}
+                                {isCorrect && <span style={{ color: '#16a34a', fontWeight: 'bold' }}>✓ </span>}
                                 {choice}
                                 {isCorrect && (
-                                  <span style={{ color: "#28a745", marginLeft: "0.5rem" }}>(Correct)</span>
+                                  <span className="text-green-600 ml-2">(Correct)</span>
                                 )}
-                              </li>
+                              </div>
                             );
                           })}
-                        </ul>
+                        </div>
                       </div>
                     )}
                     {question.type === "true-false" && (
-                      <div className="question-choices">
+                      <div className="mt-4 pt-4 border-t border-gray-200">
                         <strong>Correct Answer:</strong>
-                        <div
-                          style={{
-                            marginTop: "0.5rem",
-                            padding: "0.75rem",
-                            background: "#f8f9fa",
-                            borderRadius: "4px",
-                            display: "inline-block",
-                          }}
-                        >
-                          <strong style={{ color: "#28a745" }}>
-                            {(question as any).correctAnswer ? "True" : "False"}
+                        <div className="mt-2 p-3 bg-gray-100 rounded inline-block">
+                          <strong className="text-green-600">
+                            {(question as TrueFalseQuestion).correctAnswer ? "True" : "False"}
                           </strong>
                         </div>
                       </div>
                     )}
                     {question.type === "fill-blank" && (
-                      <div className="question-choices">
+                      <div className="mt-4 pt-4 border-t border-gray-200">
                         <strong>Correct Answers:</strong>
-                        <div style={{ marginTop: "0.5rem", display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                          {(question as any).correctAnswers.map((answer: string, i: number) => (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {(question as FillBlankQuestion).correctAnswers.map((answer: string, i: number) => (
                             <span
                               key={i}
-                              style={{
-                                padding: "0.5rem 0.75rem",
-                                background: "#d4edda",
-                                borderRadius: "4px",
-                                color: "#155724",
-                                border: "1px solid #c3e6cb",
-                              }}
+                              className="px-3 py-2 bg-green-100 rounded text-green-800 border border-green-300"
                             >
                               {answer}
                             </span>
@@ -430,10 +405,10 @@ export default function QuizEditor() {
             </div>
           )}
           {questions.length === 0 && !editingQuestion && (
-            <Card style={{ textAlign: "center", padding: "3rem" }}>
+            <Card className="text-center p-12">
               <Card.Body>
-                <p style={{ fontSize: "1.125rem", color: "#6c757d", margin: 0 }}>
-                  No questions yet. Click <strong>"+ New Question"</strong> to add one.
+                <p className="text-lg text-gray-600 m-0">
+                  No questions yet. Click <strong>&quot;+ New Question&quot;</strong> to add one.
                 </p>
               </Card.Body>
             </Card>

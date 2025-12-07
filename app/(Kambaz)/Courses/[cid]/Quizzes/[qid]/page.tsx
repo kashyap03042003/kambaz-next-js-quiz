@@ -43,7 +43,6 @@ export default function QuizDetails() {
 
   const isFaculty = currentUser?.role === "FACULTY";
 
-  // Check if quiz is available for students
   const isQuizAvailable = () => {
     if (isFaculty) return true; // Faculty can always access
     
@@ -51,13 +50,11 @@ export default function QuizDetails() {
     
     const now = new Date();
     
-    // Check if quiz is available yet
     if (quiz.availableDate) {
       const availableDate = new Date(quiz.availableDate);
       if (now < availableDate) return false;
     }
     
-    // Check if quiz is still available (use dueDate to block access, not availableUntilDate)
     if (quiz.dueDate) {
       const dueDate = new Date(quiz.dueDate);
       if (now > dueDate) return false;
@@ -72,16 +69,16 @@ export default function QuizDetails() {
   const isPastDueDate = dueDate && now > dueDate;
 
   return (
-    <div id="wd-quiz-details" style={{ padding: "20px" }}>
-      <div style={{ marginBottom: "1rem" }}>
+    <div id="wd-quiz-details" className="p-[20px]">
+      <div className="mb-4">
         <Link href={`/Courses/${cid}/Quizzes`}>← Back to Quizzes</Link>
       </div>
 
-      <Card style={{ marginBottom: "1rem" }}>
+      <Card className="mb-4">
         <Card.Body>
           <h2>{quiz.title}</h2>
           {quiz.description && <p>{quiz.description}</p>}
-          <div style={{ marginTop: "1rem" }}>
+          <div className="mt-4">
             <p><strong>Quiz Type:</strong> {quiz.quizType.replace("-", " ")}</p>
             <p><strong>Points:</strong> {quiz.points}</p>
             {quiz.timeLimit && quiz.timeLimit > 0 && (
@@ -100,8 +97,8 @@ export default function QuizDetails() {
               <p><strong>Available Until:</strong> {format(new Date(quiz.availableUntilDate), "MMM d, yyyy h:mm a")}</p>
             )}
             {!isFaculty && !quizAvailable && (
-              <div style={{ marginTop: "1rem", padding: "1rem", backgroundColor: "#f8d7da", border: "1px solid #f5c6cb", borderRadius: "4px" }}>
-                <strong style={{ color: "#721c24" }}>
+              <div className="mt-4 p-4 bg-red-100 border border-red-300 rounded">
+                <strong className="text-red-800">
                   {isPastDueDate 
                     ? "This quiz is no longer available. The due date has passed."
                     : "This quiz is not yet available."}
@@ -113,7 +110,7 @@ export default function QuizDetails() {
       </Card>
 
       {isFaculty ? (
-        <div style={{ display: "flex", gap: "1rem" }}>
+        <div className="flex items-center">
           <Button
             variant={quiz.published ? "secondary" : "success"}
             onClick={async () => {
@@ -124,12 +121,14 @@ export default function QuizDetails() {
                 console.error("Failed to update quiz", error);
               }
             }}
+            className="me-4"
           >
             {quiz.published ? "Unpublish" : "Publish"}
           </Button>
           <Button
             variant="primary"
             onClick={() => router.push(`/Courses/${cid}/Quizzes/${quiz._id}/edit`)}
+            className="me-4"
           >
             Edit
           </Button>

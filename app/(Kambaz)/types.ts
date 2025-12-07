@@ -131,14 +131,17 @@ export interface FillBlankQuestion {
 
 export type Question = MultipleChoiceQuestion | TrueFalseQuestion | FillBlankQuestion;
 
+// Answer can be: number (single choice), number[] (multiple choice), boolean (true/false), string (fill-blank), or Record<string, string> (fill-blank with multiple blanks)
+export type AnswerValue = number | number[] | boolean | string | Record<string, string>;
+
 export interface QuizAttempt {
   _id: string;
   quizId: string;
   studentId: string;
-  answers: Record<string, any>; // questionId -> answer
+  answers: Record<string, AnswerValue>; // questionId -> answer
   score: number;
   totalPoints: number;
   submittedAt: string;
   attemptNumber: number;
-  gradedAnswers?: Record<string, { answer: any; correct: boolean; correctAnswer: any }>;
+  gradedAnswers?: Record<string, { answer: AnswerValue; correct: boolean; correctAnswer: AnswerValue }>;
 }

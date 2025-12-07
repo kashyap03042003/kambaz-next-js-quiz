@@ -4,86 +4,8 @@ import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../../store";
 import * as client from "../../client";
-import { Quiz, Question, QuizAttempt, MultipleChoiceQuestion, FillBlankQuestion } from "../../../../../types";
+import { Quiz, Question, QuizAttempt, MultipleChoiceQuestion, FillBlankQuestion, TrueFalseQuestion, AnswerValue } from "../../../../../types";
 import { Button, Card, Form, Alert } from "react-bootstrap";
-
-// Add custom styles for checkboxes and radio buttons with lighter borders
-const checkboxRadioStyles = `
-  #wd-quiz-take .form-check-input,
-  #wd-quiz-take input[type="checkbox"],
-  #wd-quiz-take input[type="radio"] {
-    border: 2px solid #6c757d !important;
-    background-color: #ffffff !important;
-    width: 1.25em !important;
-    height: 1.25em !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
-    appearance: none !important;
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    cursor: pointer !important;
-    margin-top: 0.15em !important;
-    vertical-align: top !important;
-    flex-shrink: 0 !important;
-  }
-  #wd-quiz-take .form-check-input:checked,
-  #wd-quiz-take input[type="checkbox"]:checked,
-  #wd-quiz-take input[type="radio"]:checked {
-    background-color: #0d6efd !important;
-    border-color: #6c757d !important;
-    border-width: 2px !important;
-  }
-  #wd-quiz-take .form-check-input:checked[type="checkbox"]::before,
-  #wd-quiz-take input[type="checkbox"]:checked::before {
-    content: "✓" !important;
-    display: block !important;
-    color: #ffffff !important;
-    font-weight: bold !important;
-    text-align: center !important;
-    line-height: 1.25em !important;
-    font-size: 0.9em !important;
-  }
-  #wd-quiz-take .form-check-input:focus,
-  #wd-quiz-take input[type="checkbox"]:focus,
-  #wd-quiz-take input[type="radio"]:focus {
-    border-color: #6c757d !important;
-    border-width: 2px !important;
-    box-shadow: 0 0 0 0.25rem rgba(108, 117, 125, 0.25) !important;
-    outline: none !important;
-  }
-  #wd-quiz-take .form-check-input[type="radio"],
-  #wd-quiz-take input[type="radio"] {
-    border-radius: 50% !important;
-    border: 2px solid #6c757d !important;
-  }
-  #wd-quiz-take .form-check-input[type="radio"]:checked,
-  #wd-quiz-take input[type="radio"]:checked {
-    background-color: #0d6efd !important;
-    border-color: #6c757d !important;
-    background-image: radial-gradient(circle, #ffffff 35%, transparent 35%) !important;
-  }
-  #wd-quiz-take .form-check-input[type="checkbox"],
-  #wd-quiz-take input[type="checkbox"] {
-    border-radius: 0.25rem !important;
-    border: 2px solid #6c757d !important;
-  }
-  #wd-quiz-take .form-check-input:disabled,
-  #wd-quiz-take input[type="checkbox"]:disabled,
-  #wd-quiz-take input[type="radio"]:disabled {
-    border-color: #adb5bd !important;
-    border-width: 2px !important;
-    opacity: 0.6 !important;
-  }
-  #wd-quiz-take .form-check {
-    display: flex !important;
-    align-items: flex-start !important;
-    min-height: 1.5rem !important;
-  }
-  #wd-quiz-take .form-check-label {
-    margin-left: 0.5em !important;
-    padding-top: 0.1em !important;
-    line-height: 1.5 !important;
-  }
-`;
 
 export default function QuizTake() {
   const { cid, qid } = useParams();
@@ -91,7 +13,7 @@ export default function QuizTake() {
   const { currentUser } = useSelector((state: RootState) => state.accountReducer);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
   const [submitted, setSubmitted] = useState(false);
   const [attempt, setAttempt] = useState<QuizAttempt | null>(null);
   const [loading, setLoading] = useState(true);
@@ -142,24 +64,6 @@ export default function QuizTake() {
     }
   }, [quiz, submitted]);
 
-  // Inject styles for checkboxes and radio buttons
-  useEffect(() => {
-    const styleId = 'quiz-checkbox-radio-styles';
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = checkboxRadioStyles;
-      document.head.appendChild(style);
-    }
-    return () => {
-      const style = document.getElementById(styleId);
-      if (style) {
-        style.remove();
-      }
-    };
-  }, []);
-
-  // Prevent navigation away from quiz if not submitted
   useEffect(() => {
     if (!submitted && quiz && questions.length > 0) {
       const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -195,7 +99,6 @@ export default function QuizTake() {
       const data = await client.findQuestionsForQuiz(qid as string);
       setQuestions(data);
       
-      // Shuffle choices if shuffleAnswers is enabled
       if (quiz?.shuffleAnswers) {
         const shuffled: Question[] = [];
         const maps: Record<string, { originalToShuffled: number[], shuffledToOriginal: number[] }> = {};
@@ -206,17 +109,14 @@ export default function QuizTake() {
             const originalChoices = [...mcq.choices];
             const indices = originalChoices.map((_, i) => i);
             
-            // Shuffle the indices
             const shuffledIndices = [...indices];
             for (let i = shuffledIndices.length - 1; i > 0; i--) {
               const j = Math.floor(Math.random() * (i + 1));
               [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
             }
             
-            // Create shuffled choices array
             const shuffledChoices = shuffledIndices.map(idx => originalChoices[idx]);
             
-            // Create mapping: original index -> shuffled index
             const originalToShuffled: number[] = new Array(originalChoices.length);
             const shuffledToOriginal: number[] = new Array(originalChoices.length);
             shuffledIndices.forEach((originalIdx, shuffledIdx) => {
@@ -226,7 +126,6 @@ export default function QuizTake() {
             
             maps[question._id] = { originalToShuffled, shuffledToOriginal };
             
-            // Create new question with shuffled choices
             shuffled.push({
               ...question,
               choices: shuffledChoices,
@@ -287,8 +186,12 @@ export default function QuizTake() {
       const data = await client.submitQuizAttempt(qid as string, answers, quiz.accessCode || undefined);
       setAttempt(data);
       setSubmitted(true);
-    } catch (error: any) {
-      alert(error.response?.data?.message || error.response?.data?.error || "Failed to submit quiz");
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { message?: string; error?: string } } }).response?.data?.message 
+          || (error as { response?: { data?: { message?: string; error?: string } } }).response?.data?.error
+        : undefined;
+      alert(errorMessage || "Failed to submit quiz");
     }
   };
 
@@ -298,7 +201,7 @@ export default function QuizTake() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const isCorrect = (question: Question, answer: any): boolean => {
+  const isCorrect = (question: Question, answer: AnswerValue): boolean => {
     if (!attempt?.gradedAnswers) return false;
     const graded = attempt.gradedAnswers[question._id];
     return graded?.correct || false;
@@ -313,19 +216,15 @@ export default function QuizTake() {
     return [];
   };
 
-  // Parse fill-in-blank question to extract blanks
   const parseFillBlankQuestion = (questionText: string): { parts: Array<{ type: 'text' | 'blank'; content: string; index?: number }>; blankCount: number } => {
     const parts: Array<{ type: 'text' | 'blank'; content: string; index?: number }> = [];
     let blankCount = 0;
-    let currentIndex = 0;
     
-    // Match both ___ and [___] patterns
     const regex = /(___|\[___\])/g;
     let lastIndex = 0;
     let match;
     
     while ((match = regex.exec(questionText)) !== null) {
-      // Add text before the blank
       if (match.index > lastIndex) {
         parts.push({
           type: 'text',
@@ -333,7 +232,6 @@ export default function QuizTake() {
         });
       }
       
-      // Add the blank
       blankCount++;
       parts.push({
         type: 'blank',
@@ -344,7 +242,6 @@ export default function QuizTake() {
       lastIndex = regex.lastIndex;
     }
     
-    // Add remaining text
     if (lastIndex < questionText.length) {
       parts.push({
         type: 'text',
@@ -352,7 +249,6 @@ export default function QuizTake() {
       });
     }
     
-    // If no blanks found, treat entire question as text
     if (blankCount === 0) {
       parts.push({ type: 'text', content: questionText });
     }
@@ -385,7 +281,7 @@ export default function QuizTake() {
 
   if (showAccessCode) {
     return (
-      <div style={{ padding: "20px", maxWidth: "500px", margin: "5rem auto" }}>
+      <div className="p-[20px] max-w-[500px] my-20 mx-auto">
         <Card>
           <Card.Body>
             <h2>Enter Access Code</h2>
@@ -402,7 +298,7 @@ export default function QuizTake() {
                 }}
               />
             </Form.Group>
-            <Button variant="primary" onClick={handleAccessCodeSubmit} style={{ width: "100%" }}>
+            <Button variant="primary" onClick={handleAccessCodeSubmit} className="w-full">
               Continue
             </Button>
           </Card.Body>
@@ -411,24 +307,22 @@ export default function QuizTake() {
     );
   }
 
-  // Show all questions if submitted (for review)
   const showAllQuestions = submitted;
 
   if (showAllQuestions) {
-    // Show all questions after submission
     return (
-      <div id="wd-quiz-take" style={{ padding: "20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+      <div id="wd-quiz-take" className="p-[20px]">
+        <div className="flex justify-between items-center mb-4">
           <Button
             variant="link"
             onClick={() => router.push(`/Courses/${cid}/Quizzes/${qid}`)}
-            style={{ textDecoration: "none", padding: 0, color: "#0d6efd" }}
+            className="no-underline p-0 text-blue-600"
           >
             ← Back to Quiz
           </Button>
         </div>
 
-        <Card style={{ marginBottom: "2rem" }}>
+        <Card className="mb-8">
           <Card.Body>
             <h2>{quiz.title}</h2>
             <div dangerouslySetInnerHTML={{ __html: quiz.description || "" }} />
@@ -440,34 +334,26 @@ export default function QuizTake() {
           return (
             <Card
               key={question._id}
-              style={{
-                marginBottom: "1rem",
-                borderLeft: submitted
-                  ? isQuestionCorrect
-                    ? "4px solid green"
-                    : "4px solid red"
-                  : "none",
-              }}
+              className={`mb-4 ${submitted ? (isQuestionCorrect ? "border-l-4 border-l-green-500" : "border-l-4 border-l-red-500") : ""}`}
             >
               <Card.Body>
                 <h3>
                   Question {index + 1} ({question.points} points)
                   {submitted && (
-                    <span style={{ marginLeft: "1rem", color: isQuestionCorrect ? "green" : "red" }}>
-                      {isQuestionCorrect ? "✓ Correct" : "✗ Incorrect"}
+                    <span className={`ml-4 ${isQuestionCorrect ? "text-green-600" : "text-red-600"}`}>
+                      {isQuestionCorrect ? <><span style={{ color: '#16a34a', marginLeft: '0.25rem' }}>✓</span> Correct</> : <><span style={{ color: '#dc2626', marginLeft: '0.25rem' }}>✗</span> Incorrect</>}
                     </span>
                   )}
                 </h3>
                 <div dangerouslySetInnerHTML={{ __html: question.question }} />
 
                 {question.type === "multiple-choice" && (
-                  <div style={{ marginTop: "1rem" }}>
+                  <div className="mt-4">
                     {(question as MultipleChoiceQuestion).choices.map((choice: string, shuffledIdx: number) => {
                       // Get original question for correct indices
                       const originalQuestion = questions.find(q => q._id === question._id) as MultipleChoiceQuestion;
                       const originalCorrectIndices = originalQuestion ? getCorrectIndices(originalQuestion) : [];
                       
-                      // Map correct indices to shuffled positions
                       let correctIndices: number[] = [];
                       if (quiz?.shuffleAnswers && shuffleMaps[question._id]) {
                         correctIndices = originalCorrectIndices.map(origIdx => shuffleMaps[question._id].originalToShuffled[origIdx]);
@@ -477,18 +363,18 @@ export default function QuizTake() {
                       
                       const isCorrectAnswer = correctIndices.includes(shuffledIdx);
                       
-                      // Map shuffled index to original index for answer checking
                       let originalIdx = shuffledIdx;
                       if (quiz?.shuffleAnswers && shuffleMaps[question._id]) {
                         originalIdx = shuffleMaps[question._id].shuffledToOriginal[shuffledIdx];
                       }
                       
-                      const isSelected = Array.isArray(answers[question._id])
-                        ? answers[question._id].includes(originalIdx)
-                        : answers[question._id] === originalIdx;
+                      const answerValue = answers[question._id];
+                      const isSelected = Array.isArray(answerValue)
+                        ? answerValue.includes(originalIdx)
+                        : answerValue === originalIdx;
 
                       return (
-                        <div key={shuffledIdx} style={{ marginBottom: "0.5rem" }}>
+                        <div key={shuffledIdx} className="mb-2">
                           <Form.Check
                             type={correctIndices.length === 1 ? "radio" : "checkbox"}
                             name={correctIndices.length === 1 ? `question-${question._id}` : undefined}
@@ -497,7 +383,7 @@ export default function QuizTake() {
                               <span>
                                 {choice}
                                 {submitted && isCorrectAnswer && (
-                                  <span style={{ color: "green", marginLeft: "0.5rem" }}>(Correct Answer)</span>
+                                  <span className="text-green-600 ml-2">(Correct Answer)</span>
                                 )}
                               </span>
                             }
@@ -511,41 +397,49 @@ export default function QuizTake() {
                 )}
 
                 {question.type === "true-false" && (
-                  <div style={{ marginTop: "1rem" }}>
-                    <Form.Check
-                      type="radio"
-                      name={`question-${question._id}`}
-                      id={`question-${question._id}-true`}
-                      label="True"
-                      checked={answers[question._id] === true}
-                      disabled={true}
-                      style={{ marginBottom: "0.5rem" }}
-                    />
-                    {submitted && (question as any).correctAnswer === true && (
-                      <span style={{ color: "green", marginLeft: "0.5rem" }}>(Correct Answer)</span>
-                    )}
-                    <Form.Check
-                      type="radio"
-                      name={`question-${question._id}`}
-                      id={`question-${question._id}-false`}
-                      label="False"
-                      checked={answers[question._id] === false}
-                      disabled={true}
-                    />
-                    {submitted && (question as any).correctAnswer === false && (
-                      <span style={{ color: "green", marginLeft: "0.5rem" }}>(Correct Answer)</span>
-                    )}
+                  <div className="mt-4">
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <Form.Check
+                        type="radio"
+                        name={`question-${question._id}`}
+                        id={`question-${question._id}-true`}
+                        label="True"
+                        checked={answers[question._id] === true}
+                        disabled={true}
+                        style={{ margin: 0 }}
+                      />
+                      {submitted && (question as TrueFalseQuestion).correctAnswer === true && (
+                        <span className="text-green-600" style={{ marginLeft: '0.5rem' }}>(Correct Answer)</span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Form.Check
+                        type="radio"
+                        name={`question-${question._id}`}
+                        id={`question-${question._id}-false`}
+                        label="False"
+                        checked={answers[question._id] === false}
+                        disabled={true}
+                        style={{ margin: 0 }}
+                      />
+                      {submitted && (question as TrueFalseQuestion).correctAnswer === false && (
+                        <span className="text-green-600" style={{ marginLeft: '0.5rem' }}>(Correct Answer)</span>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 {question.type === "fill-blank" && (
-                  <div style={{ marginTop: "1rem" }}>
+                  <div className="mt-4" style={{ lineHeight: '2' }}>
                     {(() => {
                       const { parts, blankCount } = parseFillBlankQuestion(question.question);
-                      const fillBlankAnswers = answers[question._id] || {};
+                      const answerValue = answers[question._id];
+                      const fillBlankAnswers: Record<string, string> = (typeof answerValue === 'object' && answerValue !== null && !Array.isArray(answerValue))
+                        ? answerValue as Record<string, string>
+                        : {};
                       
                       return (
-                        <div>
+                        <div style={{ fontSize: '1rem' }}>
                           {parts.map((part, partIndex) => {
                             if (part.type === 'text') {
                               return <span key={partIndex} dangerouslySetInnerHTML={{ __html: part.content }} />;
@@ -553,31 +447,39 @@ export default function QuizTake() {
                               const blankIndex = part.index!;
                               const studentAnswer = fillBlankAnswers[blankIndex] || "";
                               const correctAnswers = (question as FillBlankQuestion).correctAnswers || [];
-                              const isCorrect = submitted && correctAnswers.some(ca => 
-                                ca.toLowerCase().trim() === studentAnswer.toLowerCase().trim()
-                              );
+                              // Each blank maps to one answer: blank 1 -> index 0, blank 2 -> index 1, etc.
+                              const correctAnswer = correctAnswers[blankIndex - 1] || "";
+                              const isCorrect = submitted && correctAnswer.toLowerCase().trim() === studentAnswer.toLowerCase().trim();
                               
                               return (
-                                <span key={partIndex} style={{ display: "inline-block", margin: "0 0.25rem" }}>
-                                  <Form.Control
-                                    type="text"
-                                    value={studentAnswer}
-                                    disabled={true}
-                                    style={{
-                                      display: "inline-block",
-                                      width: "150px",
-                                      border: submitted
-                                        ? isCorrect
-                                          ? "2px solid #28a745"
-                                          : "2px solid #dc3545"
-                                        : "1px solid #ced4da",
-                                    }}
-                                  />
-                                  {submitted && !isCorrect && (
-                                    <span style={{ fontSize: "0.75rem", marginLeft: "0.5rem", color: "#dc3545" }}>
-                                      Correct: {correctAnswers.join(" or ")}
-                                    </span>
-                                  )}
+                                <span key={partIndex} style={{ display: 'inline-block', margin: '0 0.5rem', verticalAlign: 'middle' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Form.Control
+                                      type="text"
+                                      value={studentAnswer}
+                                      disabled={true}
+                                      style={{
+                                        minWidth: '180px',
+                                        display: 'inline-block',
+                                        padding: '0.5rem',
+                                        fontSize: '1rem',
+                                        border: submitted 
+                                          ? (isCorrect ? '2px solid #16a34a' : '2px solid #dc2626')
+                                          : '1px solid #d1d5db',
+                                        borderRadius: '0.25rem'
+                                      }}
+                                    />
+                                    {submitted && !isCorrect && (
+                                      <span style={{ fontSize: '0.875rem', color: '#dc2626', whiteSpace: 'nowrap' }}>
+                                        ✓ {correctAnswer}
+                                      </span>
+                                    )}
+                                    {submitted && isCorrect && (
+                                      <span style={{ fontSize: '0.875rem', color: '#16a34a', whiteSpace: 'nowrap' }}>
+                                        ✓ Correct
+                                      </span>
+                                    )}
+                                  </div>
                                 </span>
                               );
                             }
@@ -593,23 +495,24 @@ export default function QuizTake() {
         })}
 
         {attempt && (
-          <Card style={{ marginTop: "2rem", textAlign: "center", backgroundColor: "#f0f0f0" }}>
+          <Card className="mt-8 text-center bg-gray-100">
             <Card.Body>
               <h2>Quiz Results</h2>
-              <p style={{ fontSize: "1.5rem", marginTop: "1rem" }}>
+              <p className="text-2xl mt-4">
                 Score: {attempt.score} / {attempt.totalPoints}
               </p>
-              <p style={{ fontSize: "1.2rem", marginTop: "0.5rem" }}>
+              <p className="text-xl mt-2">
                 Percentage: {((attempt.score / attempt.totalPoints) * 100).toFixed(1)}%
               </p>
-              <p style={{ marginTop: "0.5rem", color: "#666" }}>Attempt #{attempt.attemptNumber}</p>
-              <Button
-                variant="secondary"
-                onClick={() => router.push(`/Courses/${cid}/Quizzes`)}
-                style={{ marginTop: "1rem" }}
-              >
-                Back to Quizzes
-              </Button>
+              <p className="mt-2 text-gray-600">Attempt #{attempt.attemptNumber}</p>
+              <div className="mt-4">
+                <Button
+                  variant="secondary"
+                  onClick={() => router.push(`/Courses/${cid}/Quizzes`)}
+                >
+                  Back to Quizzes
+                </Button>
+              </div>
             </Card.Body>
           </Card>
         )}
@@ -617,8 +520,6 @@ export default function QuizTake() {
     );
   }
 
-  // Show one question at a time when taking quiz
-  // Use shuffled questions if shuffle is enabled, otherwise use original questions
   const displayQuestions = shuffledQuestions.length > 0 ? shuffledQuestions : questions;
   const currentQuestion = displayQuestions[currentQuestionIndex];
   if (!currentQuestion) {
@@ -628,12 +529,10 @@ export default function QuizTake() {
   const isQuestionCorrect = submitted ? isCorrect(currentQuestion, answers[currentQuestion._id]) : false;
   const mcq = currentQuestion as MultipleChoiceQuestion;
   
-  // Get correct indices - if shuffled, map them to shuffled positions
   let correctIndices: number[] = [];
   if (currentQuestion.type === "multiple-choice") {
     const originalIndices = getCorrectIndices(questions[currentQuestionIndex] as MultipleChoiceQuestion);
     if (quiz?.shuffleAnswers && shuffleMaps[currentQuestion._id]) {
-      // Map original indices to shuffled positions
       correctIndices = originalIndices.map(origIdx => shuffleMaps[currentQuestion._id].originalToShuffled[origIdx]);
     } else {
       correctIndices = originalIndices;
@@ -654,42 +553,41 @@ export default function QuizTake() {
   };
 
   return (
-    <div id="wd-quiz-take" style={{ padding: "20px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+    <div id="wd-quiz-take" className="p-[20px]">
+      <div className="flex justify-between items-center mb-4">
         <Button
           variant="link"
           onClick={handleBackNavigation}
-          style={{ textDecoration: "none", padding: 0, color: "#0d6efd" }}
+          className="no-underline p-0 text-blue-600"
         >
           ← Back to Quiz
         </Button>
         {timeRemaining !== null && !submitted && (
-          <Alert variant="warning" style={{ margin: 0 }}>
+          <Alert variant="warning" className="m-0">
             <strong>Time Remaining: {formatTime(timeRemaining)}</strong>
           </Alert>
         )}
       </div>
 
-      <Card style={{ marginBottom: "2rem" }}>
+      <Card className="mb-8">
         <Card.Body>
           <h2>{quiz.title}</h2>
           <div dangerouslySetInnerHTML={{ __html: quiz.description || "" }} />
         </Card.Body>
       </Card>
 
-      {/* Question Navigation */}
-      <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2rem', marginBottom: '1rem' }}>
         <div>
           <strong>Question {currentQuestionIndex + 1} of {displayQuestions.length}</strong>
         </div>
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           {displayQuestions.map((_, index) => (
             <Button
               key={index}
               variant={index === currentQuestionIndex ? "primary" : "outline-secondary"}
               size="sm"
               onClick={() => goToQuestion(index)}
-              style={{ minWidth: "40px" }}
+              style={{ minWidth: '40px' }}
             >
               {index + 1}
             </Button>
@@ -698,62 +596,80 @@ export default function QuizTake() {
       </div>
 
       <Card
-        style={{
-          marginBottom: "2rem",
-          borderLeft: submitted
-            ? isQuestionCorrect
-              ? "4px solid green"
-              : "4px solid red"
-            : "none",
-        }}
+        className={`mb-8 ${submitted ? (isQuestionCorrect ? "border-l-4 border-l-green-500" : "border-l-4 border-l-red-500") : ""}`}
       >
         <Card.Body>
           <h3>
             Question {currentQuestionIndex + 1} ({currentQuestion.points} points)
             {submitted && (
-              <span style={{ marginLeft: "1rem", color: isQuestionCorrect ? "green" : "red" }}>
-                {isQuestionCorrect ? "✓ Correct" : "✗ Incorrect"}
+              <span className={`ml-4 ${isQuestionCorrect ? "text-green-600" : "text-red-600"}`}>
+                {isQuestionCorrect ? <><span style={{ color: '#16a34a', marginLeft: '0.25rem' }}>✓</span> Correct</> : <><span style={{ color: '#dc2626', marginLeft: '0.25rem' }}>✗</span> Incorrect</>}
               </span>
             )}
           </h3>
           
           {currentQuestion.type === "fill-blank" ? (
-            <div>
+            <div style={{ lineHeight: '2' }}>
               {(() => {
                 const { parts, blankCount } = parseFillBlankQuestion(currentQuestion.question);
-                const fillBlankAnswers = answers[currentQuestion._id] || {};
+                const answerValue = answers[currentQuestion._id];
+                const fillBlankAnswers: Record<string, string> = (typeof answerValue === 'object' && answerValue !== null && !Array.isArray(answerValue))
+                  ? answerValue as Record<string, string>
+                  : {};
                 
                 return (
-                  <div>
+                  <div style={{ fontSize: '1rem' }}>
                     {parts.map((part, partIndex) => {
                       if (part.type === 'text') {
                         return <span key={partIndex} dangerouslySetInnerHTML={{ __html: part.content }} />;
                       } else {
                         const blankIndex = part.index!;
                         const studentAnswer = fillBlankAnswers[blankIndex] || "";
+                        const correctAnswers = (currentQuestion as FillBlankQuestion).correctAnswers || [];
+                        // Each blank maps to one answer: blank 1 -> index 0, blank 2 -> index 1, etc.
+                        const correctAnswer = correctAnswers[blankIndex - 1] || "";
+                        const isCorrect = submitted && correctAnswer.toLowerCase().trim() === studentAnswer.toLowerCase().trim();
                         
                         return (
-                          <span key={partIndex} style={{ display: "inline-block", margin: "0 0.25rem" }}>
-                            <Form.Control
-                              type="text"
-                              value={studentAnswer}
-                              onChange={(e) => {
-                                setAnswers({
-                                  ...answers,
-                                  [currentQuestion._id]: {
-                                    ...fillBlankAnswers,
-                                    [blankIndex]: e.target.value
-                                  }
-                                });
-                              }}
-                              disabled={submitted}
-                              placeholder={`Blank ${blankIndex}`}
-                              style={{
-                                display: "inline-block",
-                                width: "150px",
-                                    }}
-                                  />
+                          <span key={partIndex} style={{ display: 'inline-block', margin: '0 0.5rem', verticalAlign: 'middle' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <Form.Control
+                                type="text"
+                                value={studentAnswer}
+                                onChange={(e) => {
+                                  setAnswers({
+                                    ...answers,
+                                    [currentQuestion._id]: {
+                                      ...fillBlankAnswers,
+                                      [blankIndex]: e.target.value
+                                    }
+                                  });
+                                }}
+                                disabled={submitted}
+                                placeholder=""
+                                style={{
+                                  minWidth: '180px',
+                                  display: 'inline-block',
+                                  padding: '0.5rem',
+                                  fontSize: '1rem',
+                                  border: submitted 
+                                    ? (isCorrect ? '2px solid #16a34a' : '2px solid #dc2626')
+                                    : '1px solid #d1d5db',
+                                  borderRadius: '0.25rem'
+                                }}
+                              />
+                              {submitted && !isCorrect && (
+                                <span style={{ fontSize: '0.875rem', color: '#dc2626', whiteSpace: 'nowrap' }}>
+                                  ✓ {correctAnswer}
                                 </span>
+                              )}
+                              {submitted && isCorrect && (
+                                <span style={{ fontSize: '0.875rem', color: '#16a34a', whiteSpace: 'nowrap' }}>
+                                  ✓ Correct
+                                </span>
+                              )}
+                            </div>
+                          </span>
                         );
                       }
                     })}
@@ -766,25 +682,24 @@ export default function QuizTake() {
           )}
 
           {currentQuestion.type === "multiple-choice" && (
-            <div style={{ marginTop: "1rem" }}>
+            <div className="mt-4">
               {mcq.choices.map((choice: string, shuffledIdx: number) => {
                 const isCorrectAnswer = correctIndices.includes(shuffledIdx);
                 
-                // Map shuffled index to original index for answer storage
                 let originalIdx = shuffledIdx;
                 if (quiz?.shuffleAnswers && shuffleMaps[currentQuestion._id]) {
                   originalIdx = shuffleMaps[currentQuestion._id].shuffledToOriginal[shuffledIdx];
                 }
                 
-                // Check if this original index is selected
+                const answerValue = answers[currentQuestion._id];
                 const isSelected = isSingleCorrect
-                  ? answers[currentQuestion._id] === originalIdx
-                  : Array.isArray(answers[currentQuestion._id])
-                  ? answers[currentQuestion._id].includes(originalIdx)
+                  ? answerValue === originalIdx
+                  : Array.isArray(answerValue)
+                  ? answerValue.includes(originalIdx)
                   : false;
 
                 return (
-                  <div key={shuffledIdx} style={{ marginBottom: "0.5rem" }}>
+                  <div key={shuffledIdx} className="mb-2">
                     <Form.Check
                       type={isSingleCorrect ? "radio" : "checkbox"}
                       name={isSingleCorrect ? `question-${currentQuestion._id}` : undefined}
@@ -793,7 +708,7 @@ export default function QuizTake() {
                         <span>
                           {choice}
                           {submitted && isCorrectAnswer && (
-                            <span style={{ color: "green", marginLeft: "0.5rem" }}>(Correct Answer)</span>
+                            <span className="text-green-600 ml-2">(Correct Answer)</span>
                           )}
                         </span>
                       }
@@ -801,13 +716,13 @@ export default function QuizTake() {
                       onChange={(e) => {
                         if (submitted) return;
                         if (isSingleCorrect) {
-                          // Store original index, not shuffled index
                           setAnswers({ ...answers, [currentQuestion._id]: originalIdx });
                         } else {
-                          const currentAnswers = Array.isArray(answers[currentQuestion._id])
-                            ? answers[currentQuestion._id]
-                            : answers[currentQuestion._id] !== undefined
-                            ? [answers[currentQuestion._id]]
+                          const currentAnswerValue = answers[currentQuestion._id];
+                          const currentAnswers: number[] = Array.isArray(currentAnswerValue)
+                            ? currentAnswerValue
+                            : currentAnswerValue !== undefined
+                            ? [currentAnswerValue as number]
                             : [];
                           if (e.target.checked) {
                             setAnswers({ ...answers, [currentQuestion._id]: [...currentAnswers, originalIdx] });
@@ -825,39 +740,43 @@ export default function QuizTake() {
           )}
 
           {currentQuestion.type === "true-false" && (
-            <div style={{ marginTop: "1rem" }}>
-              <Form.Check
-                type="radio"
-                name={`question-${currentQuestion._id}`}
-                id={`question-${currentQuestion._id}-true`}
-                label="True"
-                checked={answers[currentQuestion._id] === true}
-                onChange={() => setAnswers({ ...answers, [currentQuestion._id]: true })}
-                disabled={submitted}
-                style={{ marginBottom: "0.5rem" }}
-              />
-              {submitted && (currentQuestion as any).correctAnswer === true && (
-                <span style={{ color: "green", marginLeft: "0.5rem" }}>(Correct Answer)</span>
-              )}
-              <Form.Check
-                type="radio"
-                name={`question-${currentQuestion._id}`}
-                id={`question-${currentQuestion._id}-false`}
-                label="False"
-                checked={answers[currentQuestion._id] === false}
-                onChange={() => setAnswers({ ...answers, [currentQuestion._id]: false })}
-                disabled={submitted}
-              />
-              {submitted && (currentQuestion as any).correctAnswer === false && (
-                <span style={{ color: "green", marginLeft: "0.5rem" }}>(Correct Answer)</span>
-              )}
+            <div className="mt-4">
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <Form.Check
+                  type="radio"
+                  name={`question-${currentQuestion._id}`}
+                  id={`question-${currentQuestion._id}-true`}
+                  label="True"
+                  checked={answers[currentQuestion._id] === true}
+                  onChange={() => setAnswers({ ...answers, [currentQuestion._id]: true })}
+                  disabled={submitted}
+                  style={{ margin: 0 }}
+                />
+                {submitted && (currentQuestion as TrueFalseQuestion).correctAnswer === true && (
+                  <span className="text-green-600" style={{ marginLeft: '0.5rem' }}>(Correct Answer)</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <Form.Check
+                  type="radio"
+                  name={`question-${currentQuestion._id}`}
+                  id={`question-${currentQuestion._id}-false`}
+                  label="False"
+                  checked={answers[currentQuestion._id] === false}
+                  onChange={() => setAnswers({ ...answers, [currentQuestion._id]: false })}
+                  disabled={submitted}
+                  style={{ margin: 0 }}
+                />
+                {submitted && (currentQuestion as TrueFalseQuestion).correctAnswer === false && (
+                  <span className="text-green-600" style={{ marginLeft: '0.5rem' }}>(Correct Answer)</span>
+                )}
+              </div>
             </div>
           )}
         </Card.Body>
       </Card>
 
-      {/* Navigation Buttons */}
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "2rem" }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2rem' }}>
         <Button
           variant="secondary"
           onClick={goToPreviousQuestion}
@@ -865,24 +784,26 @@ export default function QuizTake() {
         >
           ← Previous
         </Button>
-        {currentQuestionIndex < questions.length - 1 ? (
-          <Button
-            variant="primary"
-            onClick={goToNextQuestion}
-            disabled={submitted}
-          >
-            Next →
-          </Button>
-        ) : (
-          <Button
-            variant="success"
-            onClick={handleSubmit}
-            disabled={submitted}
-            size="lg"
-          >
-            Submit Quiz
-          </Button>
-        )}
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          {currentQuestionIndex < questions.length - 1 ? (
+            <Button
+              variant="primary"
+              onClick={goToNextQuestion}
+              disabled={submitted}
+            >
+              Next →
+            </Button>
+          ) : (
+            <Button
+              variant="success"
+              onClick={handleSubmit}
+              disabled={submitted}
+              size="lg"
+            >
+              Submit Quiz
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

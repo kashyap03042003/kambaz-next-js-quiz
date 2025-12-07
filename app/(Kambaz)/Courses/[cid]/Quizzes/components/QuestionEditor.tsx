@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { Question, MultipleChoiceQuestion, TrueFalseQuestion, FillBlankQuestion } from "../../../../types";
 import RichTextEditor from "./RichTextEditor";
 import { Button, Form, Card } from "react-bootstrap";
-import "./QuestionEditor.css";
 
 interface QuestionEditorProps {
   question: Question;
@@ -17,11 +16,9 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
   const [points, setPoints] = useState(question.points);
   const [questionText, setQuestionText] = useState(question.question);
 
-  // Multiple choice state
   const [choices, setChoices] = useState<string[]>(
     question.type === "multiple-choice" ? (question as MultipleChoiceQuestion).choices : ["", ""]
   );
-  // Support both single (backward compatibility) and multiple correct answers
   const getInitialCorrectIndices = () => {
     if (question.type === "multiple-choice") {
       const mcq = question as MultipleChoiceQuestion;
@@ -35,18 +32,15 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
   };
   const [correctChoiceIndices, setCorrectChoiceIndices] = useState<number[]>(getInitialCorrectIndices());
 
-  // True/false state
   const [correctAnswer, setCorrectAnswer] = useState(
     question.type === "true-false" ? (question as TrueFalseQuestion).correctAnswer : true
   );
 
-  // Fill blank state
   const [correctAnswers, setCorrectAnswers] = useState<string[]>(
     question.type === "fill-blank" ? (question as FillBlankQuestion).correctAnswers : [""]
   );
 
   useEffect(() => {
-    // Reset state when type changes
     if (type === "multiple-choice" && question.type !== "multiple-choice") {
       setChoices(["", ""]);
       setCorrectChoiceIndices([]);
@@ -57,7 +51,6 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
     }
   }, [type, question.type]);
 
-  // Ensure multiple choice questions always have at least 2 choices
   useEffect(() => {
     if (type === "multiple-choice" && choices.length < 2) {
       const newChoices = [...choices];
@@ -69,7 +62,6 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
   }, [type, choices.length]);
 
   const handleSave = () => {
-    // Validation
     if (!title.trim()) {
       alert("Please enter a question title");
       return;
@@ -86,18 +78,15 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
     let updatedQuestion: Question;
 
     if (type === "multiple-choice") {
-      // Filter out empty choices and validate
       const validChoices = choices.filter((c) => c.trim() !== "");
       if (validChoices.length < 2) {
         alert("Please provide at least 2 choices for multiple choice questions");
         return;
       }
-      // Validate at least one correct answer is selected
       if (correctChoiceIndices.length === 0) {
         alert("Please select at least one correct answer");
         return;
       }
-      // Ensure all correct indices are valid
       const validIndices = correctChoiceIndices
         .filter((idx) => idx >= 0 && idx < validChoices.length)
         .sort((a, b) => a - b);
@@ -153,7 +142,6 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
     if (choices.length > 2) {
       const newChoices = choices.filter((_, i) => i !== index);
       setChoices(newChoices);
-      // Remove the index from correct answers if it was selected, and adjust other indices
       const newCorrectIndices = correctChoiceIndices
         .filter((idx) => idx !== index)
         .map((idx) => (idx > index ? idx - 1 : idx));
@@ -163,10 +151,8 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
 
   const toggleCorrectChoice = (index: number) => {
     if (correctChoiceIndices.includes(index)) {
-      // Remove from correct answers
       setCorrectChoiceIndices(correctChoiceIndices.filter((idx) => idx !== index));
     } else {
-      // Add to correct answers
       setCorrectChoiceIndices([...correctChoiceIndices, index].sort((a, b) => a - b));
     }
   };
@@ -194,11 +180,11 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
   };
 
   return (
-    <Card className="question-editor">
-      <Card.Header className="question-editor-header">
-        <h3>{question._id && question._id !== "" ? "Edit Question" : "New Question"}</h3>
+    <Card className="bg-white rounded-lg overflow-hidden mb-8">
+      <Card.Header className="bg-gray-100 px-6 py-4 border-b border-gray-200">
+        <h3 className="m-0 text-xl text-gray-800">{question._id && question._id !== "" ? "Edit Question" : "New Question"}</h3>
       </Card.Header>
-      <Card.Body className="question-editor-body">
+      <Card.Body className="p-6">
         <Form.Group className="mb-3">
           <Form.Label>Question Type</Form.Label>
           <Form.Select
@@ -211,7 +197,7 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
           </Form.Select>
         </Form.Group>
 
-        <div className="form-row">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Form.Group className="mb-3">
             <Form.Label>Title *</Form.Label>
             <Form.Control
@@ -237,17 +223,16 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
           <Form.Label>Question Text *</Form.Label>
           <RichTextEditor value={questionText} onChange={setQuestionText} />
           {type === "fill-blank" && (
-            <div style={{ marginTop: "0.5rem", padding: "1rem", background: "#f8f9fa", borderRadius: "4px" }}>
-              <Form.Text className="text-muted" style={{ display: "block", marginBottom: "0.75rem" }}>
+            <div className="mt-2 p-4 bg-gray-100 rounded">
+              <Form.Text className="text-muted block mb-3">
                 <strong>How to add blanks:</strong> Type <code>___</code> or <code>[___]</code> in your question text where you want students to fill in the blank.
                 Each blank will be automatically numbered (1, 2, 3, etc.) and students will see numbered input boxes for each blank.
               </Form.Text>
-              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
+              <div className="flex gap-2 flex-wrap mb-3">
                 <Button
                   variant="outline-secondary"
                   size="sm"
                   onClick={() => {
-                    // Simple approach: append to the end of the question text
                     setQuestionText(questionText + ' ___');
                   }}
                 >
@@ -257,15 +242,14 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
                   variant="outline-secondary"
                   size="sm"
                   onClick={() => {
-                    // Simple approach: append to the end of the question text
                     setQuestionText(questionText + ' [___]');
                   }}
                 >
                   + Add Blank ([___])
                 </Button>
               </div>
-              <div style={{ fontSize: "0.875rem", color: "#6c757d" }}>
-                <strong>Example:</strong> "The capital of France is ___ and the capital of Germany is ___."
+              <div className="text-sm text-gray-600">
+                <strong>Example:</strong> &quot;The capital of France is ___ and the capital of Germany is ___.&quot;
                 <br />
                 This creates two numbered input boxes: (1) and (2) for students to fill in.
               </div>
@@ -274,12 +258,24 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
         </Form.Group>
 
         {type === "multiple-choice" && (
-          <div className="form-group choices-group">
+          <div className="bg-gray-100 p-6 rounded-lg border border-gray-200 mb-4">
             <Form.Label>Choices * (Select all correct answers)</Form.Label>
-            <div className="choices-list">
+            <div className="mb-4">
               {choices.map((choice, index) => (
-                <div key={index} className="choice-item">
-                  <div className="choice-checkbox">
+                <div 
+                  key={index} 
+                  style={{ 
+                    display: 'flex', 
+                    gap: '0.75rem', 
+                    marginBottom: '0.75rem', 
+                    alignItems: 'center',
+                    backgroundColor: 'white',
+                    padding: '0.75rem',
+                    borderRadius: '0.25rem',
+                    border: '1px solid #d1d5db'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: '100px' }}>
                     <Form.Check
                       type="checkbox"
                       checked={correctChoiceIndices.includes(index)}
@@ -293,7 +289,7 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
                     value={choice}
                     onChange={(e) => updateChoice(index, e.target.value)}
                     placeholder={`Choice ${index + 1}`}
-                    className="choice-input"
+                    style={{ flex: 1, margin: 0 }}
                   />
                   {choices.length > 2 && (
                     <Button
@@ -301,6 +297,7 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
                       size="sm"
                       onClick={() => removeChoice(index)}
                       title="Remove choice"
+                      style={{ flexShrink: 0 }}
                     >
                       ×
                     </Button>
@@ -308,10 +305,10 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
                 </div>
               ))}
             </div>
-            <Button variant="secondary" onClick={addChoice} className="btn-add">
+            <Button variant="secondary" onClick={addChoice} className="mt-2">
               + Add Choice
             </Button>
-            <p className="form-hint">
+            <p className="mt-2 text-sm text-gray-600 italic">
               At least 2 choices required. Select the checkbox(es) next to the correct answer(s). You can select multiple correct answers.
             </p>
           </div>
@@ -320,7 +317,7 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
         {type === "true-false" && (
           <Form.Group className="mb-3">
             <Form.Label>Correct Answer *</Form.Label>
-            <div className="radio-group">
+            <div className="flex gap-8 p-4 bg-gray-100 rounded-lg">
               <Form.Check
                 type="radio"
                 name="true-false"
@@ -344,15 +341,23 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
         {type === "fill-blank" && (
           <Form.Group className="mb-3">
             <Form.Label>Correct Answers * (case-insensitive)</Form.Label>
-            <div className="answers-list">
+            <div className="mb-4">
               {correctAnswers.map((answer, index) => (
-                <div key={index} className="answer-item">
+                <div 
+                  key={index} 
+                  style={{ 
+                    display: 'flex', 
+                    gap: '0.75rem', 
+                    marginBottom: '0.75rem', 
+                    alignItems: 'center' 
+                  }}
+                >
                   <Form.Control
                     type="text"
                     value={answer}
                     onChange={(e) => updateCorrectAnswer(index, e.target.value)}
                     placeholder={`Correct answer ${index + 1}`}
-                    className="answer-input"
+                    style={{ flex: 1, margin: 0 }}
                   />
                   {correctAnswers.length > 1 && (
                     <Button
@@ -360,6 +365,7 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
                       size="sm"
                       onClick={() => removeCorrectAnswer(index)}
                       title="Remove answer"
+                      style={{ flexShrink: 0 }}
                     >
                       ×
                     </Button>
@@ -367,14 +373,14 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
                 </div>
               ))}
             </div>
-            <Button variant="secondary" onClick={addCorrectAnswer} className="btn-add">
+            <Button variant="secondary" onClick={addCorrectAnswer} className="mt-2">
               + Add Answer
             </Button>
-            <p className="form-hint">Add multiple acceptable answers if needed.</p>
+            <p className="mt-2 text-sm text-gray-600 italic">Add multiple acceptable answers if needed.</p>
           </Form.Group>
         )}
 
-        <div className="question-editor-actions">
+        <div className="flex gap-4 mt-8 pt-6 border-t border-gray-200">
           <Button variant="primary" onClick={handleSave}>
             {question._id && question._id !== "" ? "Update Question" : "Save Question"}
           </Button>

@@ -26,7 +26,6 @@ export default function Quizzes() {
   const loadQuizzes = async () => {
     try {
       const data = await client.findQuizzesForCourse(cid as string);
-      // Sort quizzes by available date (null dates go to the end)
       const sortedQuizzes = data.sort((a: Quiz, b: Quiz) => {
         const dateA = a.availableDate ? new Date(a.availableDate).getTime() : Number.MAX_SAFE_INTEGER;
         const dateB = b.availableDate ? new Date(b.availableDate).getTime() : Number.MAX_SAFE_INTEGER;
@@ -89,11 +88,11 @@ export default function Quizzes() {
   const isFaculty = currentUser?.role === "FACULTY";
 
   return (
-    <div id="wd-quizzes" style={{ padding: "20px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
-        <h2>Quizzes</h2>
+    <div id="wd-quizzes" className="p-[20px]">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h2 style={{ margin: 0 }}>Quizzes</h2>
         {isFaculty && (
-          <Button variant="primary" onClick={handleCreateQuiz}>
+          <Button variant="primary" onClick={handleCreateQuiz} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <FaPlus /> Quiz
           </Button>
         )}
@@ -110,22 +109,47 @@ export default function Quizzes() {
       ) : (
         <div>
           {quizzes.map((quiz) => (
-            <Card key={quiz._id} style={{ marginBottom: "1rem", position: "relative" }}>
+            <Card key={quiz._id} className="mb-4 relative">
               <Card.Body>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.5rem" }}>
-                      <Link
-                        href={`/Courses/${cid}/Quizzes/${quiz._id}`}
-                        style={{ textDecoration: "none", color: "inherit" }}
-                      >
-                        <h3 style={{ cursor: "pointer", margin: 0 }}>{quiz.title}</h3>
-                      </Link>
-                      {isFaculty && quiz.published && (
-                        <span style={{ color: "#28a745", fontSize: "1.2rem" }}>✓</span>
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Link
+                          href={`/Courses/${cid}/Quizzes/${quiz._id}`}
+                          className="no-underline text-inherit"
+                          style={{ display: 'flex', alignItems: 'center' }}
+                        >
+                          <h3 className="cursor-pointer m-0">{quiz.title}</h3>
+                        </Link>
+                        {isFaculty && quiz.published && (
+                          <span style={{ color: '#16a34a', fontSize: '1.125rem', display: 'flex', alignItems: 'center' }}>✓</span>
+                        )}
+                      </div>
+                      {isFaculty && (
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <Dropdown>
+                            <Dropdown.Toggle
+                              variant="link"
+                              id={`quiz-menu-${quiz._id}`}
+                              className="no-underline text-black"
+                              style={{ padding: '0.25rem 0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              <FaEllipsisV />
+                            </Dropdown.Toggle>
+                      <Dropdown.Menu>
+                        <Dropdown.Item onClick={() => handlePublish(quiz._id, !quiz.published)}>
+                          {quiz.published ? "Unpublish" : "Publish"}
+                        </Dropdown.Item>
+                        <Dropdown.Item onClick={() => handleDelete(quiz._id)} className="text-red-600">
+                          Delete
+                        </Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown>
+                        </div>
                       )}
                     </div>
-                    <div style={{ color: "#666", fontSize: "0.9rem", marginBottom: "0.5rem" }}>
+                    <div className="text-gray-600 text-sm mb-2">
                       <div>Availability: {getAvailabilityStatus(quiz)}</div>
                       {quiz.dueDate && (
                         <div>Due: {format(new Date(quiz.dueDate), "MMM d, yyyy h:mm a")}</div>
@@ -139,25 +163,6 @@ export default function Quizzes() {
                       )}
                     </div>
                   </div>
-                  {isFaculty && (
-                    <Dropdown>
-                      <Dropdown.Toggle
-                        variant="link"
-                        id={`quiz-menu-${quiz._id}`}
-                        style={{ textDecoration: "none", color: "#000", padding: "0.25rem 0.5rem" }}
-                      >
-                        <FaEllipsisV />
-                      </Dropdown.Toggle>
-                      <Dropdown.Menu>
-                        <Dropdown.Item onClick={() => handlePublish(quiz._id, !quiz.published)}>
-                          {quiz.published ? "Unpublish" : "Publish"}
-                        </Dropdown.Item>
-                        <Dropdown.Item onClick={() => handleDelete(quiz._id)} style={{ color: "#dc3545" }}>
-                          Delete
-                        </Dropdown.Item>
-                      </Dropdown.Menu>
-                    </Dropdown>
-                  )}
                 </div>
               </Card.Body>
             </Card>
