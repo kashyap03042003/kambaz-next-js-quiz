@@ -107,6 +107,7 @@ export interface MultipleChoiceQuestion {
   choices: string[];
   correctChoiceIndex?: number; // For backward compatibility (single answer)
   correctChoiceIndices?: number[]; // For multiple correct answers
+  group?: string; // Question group
 }
 
 export interface TrueFalseQuestion {
@@ -117,6 +118,7 @@ export interface TrueFalseQuestion {
   points: number;
   question: string;
   correctAnswer: boolean;
+  group?: string; // Question group
 }
 
 export interface FillBlankQuestion {
@@ -127,6 +129,7 @@ export interface FillBlankQuestion {
   points: number;
   question: string;
   correctAnswers: string[];
+  group?: string; // Question group
 }
 
 export type Question = MultipleChoiceQuestion | TrueFalseQuestion | FillBlankQuestion;

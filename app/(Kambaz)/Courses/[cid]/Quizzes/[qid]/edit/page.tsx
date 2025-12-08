@@ -6,7 +6,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../../../../store";
 import * as client from "../../client";
 import { Quiz, Question, MultipleChoiceQuestion, TrueFalseQuestion, FillBlankQuestion } from "../../../../../types";
-import { Button, Card, Form, Tabs, Tab } from "react-bootstrap";
+import { Button, Card, Form, Tabs, Tab, FormControl, InputGroup } from "react-bootstrap";
 import RichTextEditor from "../../components/RichTextEditor";
 import QuestionEditor from "../../components/QuestionEditor";
 
@@ -19,6 +19,8 @@ export default function QuizEditor() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"details" | "questions">("details");
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedGroup, setSelectedGroup] = useState<string>("all");
 
   useEffect(() => {
     if (qid) {
@@ -298,6 +300,36 @@ export default function QuizEditor() {
               + New Question
             </Button>
           </div>
+          
+          {/* Question Groups and Find Questions */}
+          <Card className="mb-4">
+            <Card.Body>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                <div style={{ flex: '1', minWidth: '200px' }}>
+                  <Form.Label><strong>Find Questions</strong></Form.Label>
+                  <FormControl
+                    type="text"
+                    placeholder="Search questions by title or content..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div style={{ flex: '1', minWidth: '200px' }}>
+                  <Form.Label><strong>Question Groups</strong></Form.Label>
+                  <Form.Select
+                    value={selectedGroup}
+                    onChange={(e) => setSelectedGroup(e.target.value)}
+                  >
+                    <option value="all">All Groups</option>
+                    {Array.from(new Set(questions.map(q => q.group).filter(Boolean))).map((group) => (
+                      <option key={group} value={group}>{group}</option>
+                    ))}
+                    <option value="ungrouped">Ungrouped</option>
+                  </Form.Select>
+                </div>
+              </div>
+            </Card.Body>
+          </Card>
           {editingQuestion && (
             <div className="mb-8">
               <QuestionEditor
@@ -307,15 +339,40 @@ export default function QuizEditor() {
               />
             </div>
           )}
-          {questions.length > 0 && (
-            <div className="flex flex-col gap-4">
-              {questions.map((question, index) => (
+          {(() => {
+            // Filter questions based on search and group
+            let filteredQuestions = questions;
+            
+            // Filter by search query
+            if (searchQuery.trim()) {
+              const query = searchQuery.toLowerCase();
+              filteredQuestions = filteredQuestions.filter(q => 
+                q.title.toLowerCase().includes(query) ||
+                q.question.toLowerCase().includes(query)
+              );
+            }
+            
+            // Filter by group
+            if (selectedGroup !== "all") {
+              if (selectedGroup === "ungrouped") {
+                filteredQuestions = filteredQuestions.filter(q => !q.group || q.group.trim() === "");
+              } else {
+                filteredQuestions = filteredQuestions.filter(q => q.group === selectedGroup);
+              }
+            }
+            
+            return filteredQuestions.length > 0 ? (
+              <div className="flex flex-col gap-4">
+                {filteredQuestions.map((question, index) => {
+                  // Find original index for display
+                  const originalIndex = questions.findIndex(q => q._id === question._id) + 1;
+                  return (
                 <Card key={question._id} className="bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
                   <Card.Body>
                     <div className="mb-4 pb-4 border-b border-gray-200">
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                         <h4 className="text-lg text-gray-800" style={{ margin: 0 }}>
-                          Question {index + 1}: {question.title || "Untitled"}
+                          Question {originalIndex}: {question.title || "Untitled"}
                         </h4>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <Button variant="secondary" size="sm" onClick={() => setEditingQuestion(question)}>
@@ -335,6 +392,14 @@ export default function QuizEditor() {
                         <span>
                           <strong>Points:</strong> {question.points}
                         </span>
+                        {question.group && (
+                          <>
+                            {" • "}
+                            <span>
+                              <strong>Group:</strong> {question.group}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="mb-4 leading-relaxed">
@@ -401,9 +466,21 @@ export default function QuizEditor() {
                     )}
                   </Card.Body>
                 </Card>
-              ))}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            ) : (
+              <Card className="text-center p-12">
+                <Card.Body>
+                  <p className="text-lg text-gray-600 m-0">
+                    {searchQuery || selectedGroup !== "all" 
+                      ? "No questions match your search criteria." 
+                      : "No questions yet. Click \"+ New Question\" to add one."}
+                  </p>
+                </Card.Body>
+              </Card>
+            );
+          })()}
           {questions.length === 0 && !editingQuestion && (
             <Card className="text-center p-12">
               <Card.Body>

@@ -15,6 +15,7 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
   const [title, setTitle] = useState(question.title);
   const [points, setPoints] = useState(question.points);
   const [questionText, setQuestionText] = useState(question.question);
+  const [group, setGroup] = useState(question.group || "");
 
   const [choices, setChoices] = useState<string[]>(
     question.type === "multiple-choice" ? (question as MultipleChoiceQuestion).choices : ["", ""]
@@ -103,6 +104,7 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
         question: questionText.trim(),
         choices: validChoices,
         correctChoiceIndices: validIndices,
+        group: group.trim() || undefined,
       } as MultipleChoiceQuestion;
     } else if (type === "true-false") {
       updatedQuestion = {
@@ -113,6 +115,7 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
         points,
         question: questionText.trim(),
         correctAnswer,
+        group: group.trim() || undefined,
       } as TrueFalseQuestion;
     } else {
       const validAnswers = correctAnswers.filter((a) => a.trim() !== "");
@@ -128,6 +131,7 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
         points,
         question: questionText.trim(),
         correctAnswers: validAnswers,
+        group: group.trim() || undefined,
       } as FillBlankQuestion;
     }
 
@@ -218,6 +222,19 @@ export default function QuestionEditor({ question, onSave, onCancel }: QuestionE
             />
           </Form.Group>
         </div>
+        
+        <Form.Group className="mb-3">
+          <Form.Label>Question Group (optional)</Form.Label>
+          <Form.Control
+            type="text"
+            value={group}
+            onChange={(e) => setGroup(e.target.value)}
+            placeholder="Enter group name (e.g., 'Chapter 1', 'Midterm', etc.)"
+          />
+          <Form.Text className="text-muted">
+            Group questions together for easier organization and filtering
+          </Form.Text>
+        </Form.Group>
 
         <Form.Group className="mb-3">
           <Form.Label>Question Text *</Form.Label>
