@@ -27,13 +27,9 @@ export default function Quizzes() {
     try {
       const data = await client.findQuizzesForCourse(cid as string);
       const sortedQuizzes = data.sort((a: Quiz, b: Quiz) => {
-        // Sort by available date first, then due date, then created date
-        const dateA = a.availableDate ? new Date(a.availableDate).getTime() : 
-                      (a.dueDate ? new Date(a.dueDate).getTime() : 
-                       (a.createdAt ? new Date(a.createdAt).getTime() : Number.MAX_SAFE_INTEGER));
-        const dateB = b.availableDate ? new Date(b.availableDate).getTime() : 
-                      (b.dueDate ? new Date(b.dueDate).getTime() : 
-                       (b.createdAt ? new Date(b.createdAt).getTime() : Number.MAX_SAFE_INTEGER));
+        // Sort by due date
+        const dateA = a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+        const dateB = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
         return dateA - dateB;
       });
       setQuizzes(sortedQuizzes);
