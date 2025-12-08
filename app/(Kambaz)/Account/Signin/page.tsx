@@ -68,6 +68,28 @@ export default function Signin() {
       <Link href="/Account/Signup" id="wd-signup-link" className="small">
         Sign up
       </Link>
+      <div 
+        className="p-3 rounded"
+        style={{
+          backgroundColor: '#f8f9fa',
+          border: '1px solid #dee2e6',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          marginTop: '3rem'
+        }}
+      >
+        <p className="mb-2 fw-semibold" style={{ color: '#495057', fontSize: '0.9rem' }}>
+          Developed by:
+        </p>
+        <p className="mb-1" style={{ color: '#212529', fontSize: '0.85rem' }}>
+          Krishna Kashyap Pasumarthi
+        </p>
+        <p className="mb-1" style={{ color: '#212529', fontSize: '0.85rem' }}>
+          Jayaditya Peddisetti
+        </p>
+        <p className="mb-0" style={{ color: '#212529', fontSize: '0.85rem' }}>
+          Sachet Kanchugar
+        </p>
+      </div>
     </div>
   );
 }
