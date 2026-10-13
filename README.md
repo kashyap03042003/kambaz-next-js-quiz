@@ -20,6 +20,48 @@ The frontend for **Kambaz**, a Canvas-style learning management system with cour
 | `STUDENT` | View enrolled courses and take quizzes |
 | `ADMIN` | Manage users on the Account → Users page |
 
+## High-level architecture
+
+```mermaid
+flowchart LR
+    B["Browser"] -->|HTTPS| FE["Next.js frontend<br/>(Vercel)"]
+    FE -->|"REST + JSON<br/>axios, withCredentials"| API["Express API<br/>(Render)"]
+    API -->|Mongoose| DB[("MongoDB Atlas")]
+    API -. "session cookie" .-> FE
+```
+
+The system has three tiers:
+
+1. **Frontend (this repo).** A Next.js App Router app on Vercel. Pages are client components that render with React-Bootstrap.
+2. **API** ([kambaz-node-server-app-quiz](https://github.com/kashyap03042003/kambaz-node-server-app-quiz)). An Express server on Render that handles authentication and CRUD for users, courses, modules, assignments, enrollments and quizzes.
+3. **Database.** MongoDB Atlas, used only by the API.
+
+### Inside the frontend
+
+```mermaid
+flowchart LR
+    P["Page component<br/>(e.g. Dashboard)"] -->|dispatch| RX["Redux store"]
+    RX -->|useSelector| P
+    P -->|calls| CL["client.ts<br/>(axios)"]
+    CL -->|"HTTP + cookie"| API["Express API"]
+    API -->|JSON| CL
+```
+
+| Layer | Where | Job |
+|---|---|---|
+| Pages and layouts | `app/(Kambaz)/**/page.tsx`, `layout.tsx` | UI and routing. `Courses/[cid]/layout.tsx` adds the course sidebar. |
+| State | `store.ts` plus feature `reducer.ts` files | Redux slices: `accountReducer` (current user), `coursesReducer`, `modulesReducer`, `assignmentsReducer` and `enrollmentsReducer` |
+| API clients | `client.ts` in each feature | axios calls to `NEXT_PUBLIC_HTTP_SERVER` with `withCredentials: true` |
+
+### A typical flow: sign in, then see your courses
+
+1. **Signin** calls `POST /api/users/signin`. The API stores the user in its session and sets the session cookie.
+2. The returned user is saved to `accountReducer.currentUser`.
+3. **Dashboard** calls `GET /api/users/:uid/courses` and puts the result in `coursesReducer`.
+4. Components read `currentUser.role` to decide what to show. For example, `FACULTY` gets the add, edit and delete controls.
+
+Edit permissions are checked in the UI only. The API itself just limits what admins and students get back: admins get all courses, and students get only published quizzes.
+
 ## Getting started
 
 ### 1. Start the backend first
