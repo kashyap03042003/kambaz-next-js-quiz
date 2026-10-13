@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kambaz (Next.js)
 
-## Getting Started
+The frontend for **Kambaz**, a Canvas-style learning management system with courses, modules, assignments, people, grades and quizzes. It's built with Next.js 16, React 19, Redux Toolkit and React-Bootstrap. The backend API is [kambaz-node-server-app-quiz](https://github.com/kashyap03042003/kambaz-node-server-app-quiz).
 
-First, run the development server:
+- **Deployed frontend:** https://kambaz-next-js-quiz.vercel.app
+- **Deployed API:** https://kambaz-node-server-app-quiz-7l9y.onrender.com
+
+## Features
+
+- **Account:** sign in, sign up and profile. Admins also get a **Users** page for managing users.
+- **Dashboard:** your enrolled courses. Faculty can add, edit and delete courses. Anyone can switch to the **Enrollments** view to enroll in or drop courses.
+- **Course pages:** Home, Modules, Assignments, Quizzes, People, Grades, Piazza and Zoom.
+- **Quizzes:** faculty create, edit and preview quizzes. Students take them and see their scores.
+
+### Roles
+
+| Role | Can do |
+|---|---|
+| `FACULTY` | Create and edit courses, modules, assignments and quizzes |
+| `STUDENT` | View enrolled courses and take quizzes |
+| `ADMIN` | Manage users on the Account → Users page |
+
+## Getting started
+
+### 1. Start the backend first
+
+Follow the setup in the [server README](https://github.com/kashyap03042003/kambaz-node-server-app-quiz). By default it runs on `http://localhost:4000`.
+
+### 2. Install and configure
+
+```bash
+npm install
+```
+
+Create `.env.development` (or `.env.local`):
+
+```env
+NEXT_PUBLIC_HTTP_SERVER=http://localhost:4000
+```
+
+### 3. Run
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000/Account/Signin.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | Description |
+|---|---|
+| `npm run dev` | Dev server (Turbopack) |
+| `npm run build` | Production build |
+| `npm start` | Serve the production build |
+| `npm run lint` | ESLint |
 
-## Learn More
+## Project structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+app/(Kambaz)/
+  Account/        Signin, Signup, Profile, Users (admin)
+  Dashboard/      Course cards, add/edit courses, enrollment toggle
+  Courses/[cid]/  Home, Modules, Assignments, Quizzes, People, Grades, ...
+  Calendar/  Inbox/
+  store.ts        Redux store
+public/images/    Course card images
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+API calls live in each feature's `client.ts` and use axios with `withCredentials: true`, so the session cookie is sent.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploying to Vercel
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Import this repo into Vercel.
+2. Set `NEXT_PUBLIC_HTTP_SERVER` to the Render API URL, with no trailing slash, then redeploy.
+3. On the server's Render service, set `CLIENT_URL` to this Vercel URL so that CORS and cookies work.
